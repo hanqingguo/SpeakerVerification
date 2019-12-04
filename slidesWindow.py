@@ -30,15 +30,16 @@ def verify(speaker, wavs, threshold):
     for wav in wavs:
         test_mfcc, test_idx = get_features(wav)
         sim = cosine_similarity(model, test_mfcc[1:, test_idx].reshape(1, -1))
-        print("Speaker Model is {}, test voice from : {}\n, sim : {}\n".format(speaker, wav[:-6], sim))
+        #print("Speaker Model is {}, test voice from : {}\n, sim : {}\n".format(speaker, wav[:-6], sim))
         if(speaker == wav[:-6]):
             if(sim < threshold):
                 fail_reject += 1
+                print("Speaker Model is {}, test voice id : {}\n, sim : {}\n".format(speaker, wav[-6:], sim))
         else:
             if(sim > threshold):
                 fail_accept += 1
-    print("Speaker Model is {}, threshold : {}\n, FAR : {}/12, FRR : {}/6\n".format(speaker, threshold, fail_accept, fail_reject))
-    return threshold, fail_accept*100/12, fail_reject*100/6
+    print("Speaker Model is {}, threshold : {}\n, FAR : {}/18, FRR : {}/6\n".format(speaker, threshold, fail_accept, fail_reject))
+    return threshold, fail_accept*100/18, fail_reject*100/5
 
 
 if __name__ == '__main__':
@@ -50,45 +51,45 @@ if __name__ == '__main__':
         for wav in os.listdir(speaker):
             wavs.append(os.path.join(speaker, wav))
 
-    # thes = []
-    # FARs = []
-    # FRRs = []
-    # for threshold in np.arange(0.5, 1.0, 0.025):
-    #     the, FAR, FRR = verify('Nick-hig', wavs, threshold)
-    #     thes.append(the)
-    #     FARs.append(FAR)
-    #     FRRs.append(FRR)
-    # plt.plot(thes, FARs, marker='o', label = "FAR", markerfacecolor='blue', markersize=12, color='skyblue', linewidth=4)
-    # plt.plot(thes, FRRs, marker='', label = "FRR", color='olive', linewidth=2)
+    thes = []
+    FARs = []
+    FRRs = []
+    for threshold in np.arange(0.5, 1.0, 0.025):
+        the, FAR, FRR = verify('xiao-hig', wavs, threshold)
+        thes.append(the)
+        FARs.append(FAR)
+        FRRs.append(FRR)
+    plt.plot(thes, FARs, marker='o', label = "FAR", markerfacecolor='blue', markersize=12, color='skyblue', linewidth=4)
+    plt.plot(thes, FRRs, marker='', label = "FRR", color='olive', linewidth=2)
 
 
-    for idx, speaker in enumerate(dataset):
-        thes = []
-        FARs = []
-        FRRs = []
-        for threshold in np.arange(0.5,1.0,0.025):
-            the, FAR, FRR = verify(speaker, wavs, threshold)
-            thes.append(the)
-            FARs.append(FAR)
-            FRRs.append(FRR)
-        FARs = np.array(FARs)
-        FRRs = np.array(FRRs)
-        if idx == 0:
-            FARss = FARs
-            FRRss = FRRs
-        else:
-            FARss = FARss + FARs
-            FRRss = FRRss + FRRs
-    
-
-
-    plt.plot(thes, FARss/3, marker='o', label = "FAR", markerfacecolor='blue', markersize=12, color='skyblue', linewidth=4)
-    plt.plot(thes, FRRss/3, marker='', label = "FRR", color='olive', linewidth=2)
+    # for idx, speaker in enumerate(dataset):
+    #     thes = []
+    #     FARs = []
+    #     FRRs = []
+    #     for threshold in np.arange(0.5,1.0,0.025):
+    #         the, FAR, FRR = verify(speaker, wavs, threshold)
+    #         thes.append(the)
+    #         FARs.append(FAR)
+    #         FRRs.append(FRR)
+    #     FARs = np.array(FARs)
+    #     FRRs = np.array(FRRs)
+    #     if idx == 0:
+    #         FARss = FARs
+    #         FRRss = FRRs
+    #     else:
+    #         FARss = FARss + FARs
+    #         FRRss = FRRss + FRRs
+    #
+    #
+    #
+    # plt.plot(thes, FARss/3, marker='o', label = "FAR", markerfacecolor='blue', markersize=12, color='skyblue', linewidth=4)
+    # plt.plot(thes, FRRss/3, marker='', label = "FRR", color='olive', linewidth=2)
 
 
     plt.legend()
     plt.xlabel("Threshold")
     plt.ylabel("%")
     plt.tick_params(labelright=True)
-    plt.title('All')
+    plt.title('Hig-All-nmfcc10')
     plt.show()

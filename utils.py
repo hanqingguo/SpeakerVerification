@@ -29,8 +29,8 @@ def get_stft(sr, samples):
     # print("Shape of STFT Original : {}".format(Xdb.shape))
     # Shape of Xdb: (1025, 752)
     # 1025 is determined by nfft, 752 is determined by higher time resolution of high smapling rate
-    # librosa.display.specshow(Xdb, sr=sr, x_axis='frames', y_axis='hz')
-    # plt.show()
+    librosa.display.specshow(Xdb, sr=sr, x_axis='frames', y_axis='hz')
+    plt.show()
     return Xdb
 
 
@@ -38,7 +38,7 @@ def gen_mel(sr, nfft, n_mels):
     # sample rate 太高导致mel filters 在高频处没有响应
     mel_basis = librosa.filters.mel(sr=sr, n_fft=nfft, n_mels=n_mels)
     # print("Shape of Mel Filters : {}".format(mel_basis.shape))
-    # librosa.display.specshow(mel_basis, x_axis='linear',sr=sr)
+    librosa.display.specshow(mel_basis, x_axis='linear',sr=sr)
     # plt.title("Mel Filters")
     # plt.show()
     return mel_basis
@@ -48,11 +48,11 @@ def get_mfcc(mel_basis, Xdb, sr, n_mfcc, log=True):
     dot_result = np.dot(mel_basis, Xdb)
     if(log):
         dot_result = np.log10(dot_result + 1e-6)
-    # librosa.display.specshow(dot_result, sr=sr, x_axis='time', y_axis='hz')
-    # plt.show()
+    librosa.display.specshow(dot_result, sr=sr, x_axis='time', y_axis='hz')
+    plt.show()
     mfccs = librosa.feature.mfcc(S = dot_result, sr=sr, n_mfcc=n_mfcc)
-    # librosa.display.specshow(mfccs, x_axis='time')
-    # plt.show()
+    librosa.display.specshow(mfccs, x_axis='time')
+    plt.show()
     return mfccs
 
 def cal_cos(fricative, window_select):
@@ -75,8 +75,17 @@ def get_fri_indics(Xdb):
     max = 0
     max_idx = 0
     for idx, col in enumerate(Xdb.T):
-        high_sum = sum(col[500:])
+        high_sum = sum(col[150:750])
         if(high_sum > max):
             max = high_sum
             max_idx = idx
     return max_idx
+
+
+if __name__ == '__main__':
+    sr, samples = readfile('jianzhi-high/6.wav')
+    Xdb = get_stft(sr=sr, samples=samples)
+    max_idx = get_fri_indics(Xdb)
+    mel_basis = gen_mel(48000, 2048, 10)
+    get_mfcc(mel_basis, Xdb, 192000, 10, log=True)
+    print(max_idx)
