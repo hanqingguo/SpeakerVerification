@@ -83,7 +83,7 @@ def get_fri_indics(Xdb):
 
 
 if __name__ == '__main__':
-    sr, samples = readfile('jianzhi-high/6.wav')
+    sr, samples = readfile('jianzhi-hig/3.wav')
     Xdb = get_stft(sr=sr, samples=samples)
     max_idx = get_fri_indics(Xdb)
     mel_basis = gen_mel(48000, 2048, 10)
