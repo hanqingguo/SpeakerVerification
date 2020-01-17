@@ -31,6 +31,7 @@ def get_stft(sr, samples):
     # Shape of Xdb: (1025, 752)
     # 1025 is determined by nfft, 752 is determined by higher time resolution of high smapling rate
     librosa.display.specshow(Xdb, sr=sr, x_axis='frames', y_axis='hz')
+    plt.title("STFT Result")
     plt.show()
     return Xdb
 
@@ -40,8 +41,8 @@ def gen_mel(sr, nfft, n_mels):
     mel_basis = librosa.filters.mel(sr=sr, n_fft=nfft, n_mels=n_mels)
     # print("Shape of Mel Filters : {}".format(mel_basis.shape))
     librosa.display.specshow(mel_basis, x_axis='linear',sr=sr)
-    # plt.title("Mel Filters")
-    # plt.show()
+    plt.title("Mel Filters")
+    plt.show()
     return mel_basis
 
 
@@ -50,6 +51,7 @@ def get_mfcc(mel_basis, max_idx, Xdb, sr, n_mfcc, log=True):
     if(log):
         dot_result = np.log10(dot_result + 1e-6)
     librosa.display.specshow(dot_result, sr=sr, x_axis='time', y_axis='hz')
+    plt.title("Result of STFT dot multiply Mel-filters")
     plt.show()
 
     mfccs = librosa.feature.mfcc(S = dot_result, sr=sr, n_mfcc=n_mfcc)
@@ -59,6 +61,7 @@ def get_mfcc(mel_basis, max_idx, Xdb, sr, n_mfcc, log=True):
     y_axis_res = 10/Xdb.shape[1]
     rect = patches.Rectangle((x_axis_res*max_idx, y_axis_res*50), 0.01, 3, linewidth=3, edgecolor='y', facecolor='none')
     ax.add_patch(rect)
+    plt.title("MFCC result")
     plt.show()
     return mfccs
 
@@ -83,6 +86,7 @@ def get_fri_indics(Xdb):
     max_idx = 0
     for idx, col in enumerate(Xdb.T):
         high_sum = sum(col[50:600])  # convert this value to MFCC coordinates
+        # TODO: show the fricative selection procedure.
         if(high_sum > max):
             max = high_sum
             max_idx = idx
