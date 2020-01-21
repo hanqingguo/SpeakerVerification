@@ -8,7 +8,7 @@ def get_features(file):
     mel_basis = gen_mel(44000, nfft=2048, n_mels=10)
     mfccs = get_mfcc(mel_basis, Xdb, sr, n_mfcc=10, log=False)
     idx = get_fri_indics(Xdb)
-    #print("High_sum is {}".format(idx))
+    # print("High_sum is {}".format(idx))
     return mfccs, idx
 
 
@@ -23,23 +23,24 @@ def verify(speaker, wavs, threshold):
     speaker_wavs = os.listdir(speaker)
     fricative = os.path.join(speaker, '2.wav')
     mfcc, idx = get_features(fricative)
-    model = mfcc[1:, idx].reshape(1,-1)
+    model = mfcc[1:, idx].reshape(1, -1)
     fail_accept = 0
     fail_reject = 0
 
     for wav in wavs:
         test_mfcc, test_idx = get_features(wav)
         sim = cosine_similarity(model, test_mfcc[1:, test_idx].reshape(1, -1))
-        #print("Speaker Model is {}, test voice from : {}\n, sim : {}\n".format(speaker, wav[:-6], sim))
-        if(speaker == wav[:-6]):
-            if(sim < threshold):
+        # print("Speaker Model is {}, test voice from : {}\n, sim : {}\n".format(speaker, wav[:-6], sim))
+        if speaker == wav[:-6]:
+            if sim < threshold:
                 fail_reject += 1
                 print("Speaker Model is {}, test voice id : {}\n, sim : {}\n".format(speaker, wav[-6:], sim))
         else:
-            if(sim > threshold):
+            if sim > threshold:
                 fail_accept += 1
-    print("Speaker Model is {}, threshold : {}\n, FAR : {}/18, FRR : {}/6\n".format(speaker, threshold, fail_accept, fail_reject))
-    return threshold, fail_accept*100/18, fail_reject*100/5
+    print("Speaker Model is {}, threshold : {}\n, FAR : {}/18, FRR : {}/6\n".format(speaker, threshold, fail_accept,
+                                                                                    fail_reject))
+    return threshold, fail_accept * 100 / 18, fail_reject * 100 / 5
 
 
 if __name__ == '__main__':
@@ -59,9 +60,8 @@ if __name__ == '__main__':
         thes.append(the)
         FARs.append(FAR)
         FRRs.append(FRR)
-    plt.plot(thes, FARs, marker='o', label = "FAR", markerfacecolor='blue', markersize=12, color='skyblue', linewidth=4)
-    plt.plot(thes, FRRs, marker='', label = "FRR", color='olive', linewidth=2)
-
+    plt.plot(thes, FARs, marker='o', label="FAR", markerfacecolor='blue', markersize=12, color='skyblue', linewidth=4)
+    plt.plot(thes, FRRs, marker='', label="FRR", color='olive', linewidth=2)
 
     # for idx, speaker in enumerate(dataset):
     #     thes = []
@@ -85,7 +85,6 @@ if __name__ == '__main__':
     #
     # plt.plot(thes, FARss/3, marker='o', label = "FAR", markerfacecolor='blue', markersize=12, color='skyblue', linewidth=4)
     # plt.plot(thes, FRRss/3, marker='', label = "FRR", color='olive', linewidth=2)
-
 
     plt.legend()
     plt.xlabel("Threshold")
