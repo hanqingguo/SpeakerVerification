@@ -24,6 +24,7 @@ def verify(speaker, wavs, threshold):
     fricative = os.path.join(speaker, '2.wav')
     mfcc, idx = get_features(fricative)
     model = mfcc[1:, idx].reshape(1, -1)
+    # contribution, get rid of first line with high power
     fail_accept = 0
     fail_reject = 0
 

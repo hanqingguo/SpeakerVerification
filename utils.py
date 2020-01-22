@@ -82,12 +82,13 @@ def get_mfcc(mel_basis, max_idx, Xdb, sr, n_mfcc, log=True):
     plt.show()
 
     mfccs = librosa.feature.mfcc(S=dot_result, sr=sr, n_mfcc=n_mfcc)
+    # draw a yellow bin
     fig, ax = plt.subplots(1)
     librosa.display.specshow(mfccs, x_axis='time')
     x_axis_res = 17.35 / Xdb.shape[1]
     y_axis_res = 10 / Xdb.shape[0]
-    print(x_axis_res * max_idx, y_axis_res * 50)
-    rect = patches.Rectangle((x_axis_res * max_idx, y_axis_res * 50), 0.01, 3, linewidth=3, edgecolor='y',
+    # print(x_axis_res * max_idx, y_axis_res * 50)
+    rect = patches.Rectangle((x_axis_res * max_idx, y_axis_res * 50), 0.01, y_axis_res*600, linewidth=3, edgecolor='y',
                              facecolor='none')
     ax.add_patch(rect)
     plt.title("MFCC result")
@@ -123,7 +124,7 @@ def get_fri_indics(Xdb, lower_bound, upper_bound):
     return max_idx
 
 
-def get_fri_width(mfccs, max_idx):
+def get_fri_width(mfccs, max_idx, width_threshold):
     # similarity function to compare look forward and look backward from max_idx
     """
     Given mfcc feature and fricative index, find the fricative consonent width
@@ -133,22 +134,54 @@ def get_fri_width(mfccs, max_idx):
     """
     print(mfccs.shape)
     # mfcc.shape = (10, 752) 降维提升运算速度
-    fricative_componant = mfccs[:, max_idx]
-    fricative_componant = fricative_componant.reshape(-1, mfccs.shape[0])
-    print(mfccs[:, max_idx:].shape)
+    # 去掉第一行，因为所有列的第一行能量都类似的高
+    fricative_componant = mfccs[1:, max_idx]
+    fricative_componant = fricative_componant.reshape(-1, mfccs.shape[0]-1)
+    print(fricative_componant.shape)
 
-    # im = cosine_similarity(fricative_componant, window_select, dense_output=True)s
-
-    for idx, col in enumerate(mfccs[:, max_idx:].T):
-        col = col.reshape(-1, mfccs.shape[0])
+    lookafter_width = 0
+    lookahead_width = 0
+    # mfccs[1:, max_idx:].shape = (9, 752-max_idx)
+    # .T means get each row
+    for col in mfccs[1:, max_idx:].T:
+        col = col.reshape(-1, mfccs.shape[0]-1)
         sim = cosine_similarity(fricative_componant, col, dense_output=True)
-        print(sim)
+        if sim > width_threshold:
+            lookafter_width = lookafter_width+1
+        else:
+            break
+    # print(lookafter_width)
 
-    return width
+    for col in mfccs[1:, :max_idx].T[::-1]:
+        col = col.reshape(-1, mfccs.shape[0]-1)
+        sim = cosine_similarity(fricative_componant, col, dense_output=True)
+        # print(sim)
+        if sim > width_threshold:
+            lookahead_width = lookahead_width+1
+        else:
+            break
+    # print(lookahead_width)
+    print("fricative width is : {}".format(lookafter_width+lookahead_width))
+    return lookafter_width, lookahead_width
+
+
+def draw_fricative_mfcc(mfccs, max_idx, lookafter_width, lookahead_width, freq_upper, freq_lower):
+    ax = librosa.display.specshow(mfccs, x_axis='time')
+    x_axis_res = 17.35 / Xdb.shape[1]
+    y_axis_res = 10 / Xdb.shape[0]
+    # print(x_axis_res * max_idx, y_axis_res * 50)
+    rect = patches.Rectangle((x_axis_res * (max_idx-lookahead_width), y_axis_res * freq_lower),
+                            x_axis_res*(lookahead_width+lookafter_width), y_axis_res * freq_upper, linewidth=3,
+                             edgecolor='y',
+                             facecolor='none')
+    ax.add_patch(rect)
+    plt.title("MFCC Fricative result")
+    plt.show()
+
 
 
 if __name__ == '__main__':
-    sr, samples = readfile('hanqing-hig/5.wav')
+    sr, samples = readfile('hanqing-hig/3.wav')
     lower_bound = 50
     upper_bound = 800
     Xdb = get_stft(sr=sr, samples=samples)
@@ -157,4 +190,6 @@ if __name__ == '__main__':
     max_idx = get_fri_indics(Xdb, lower_bound, upper_bound)
     mel_basis = gen_mel(48000, 2048, 10)
     mfcc = get_mfcc(mel_basis, max_idx, Xdb, 192000, 10, log=True)
-    width = get_fri_width(mfcc, max_idx)
+    lookafter_width, lookahead_with = get_fri_width(mfcc, max_idx,
+                                                    width_threshold=0.9)
+    draw_fricative_mfcc(mfcc, max_idx, lookafter_width, lookahead_with, freq_upper=upper_bound, freq_lower=lower_bound)
